@@ -1,8 +1,11 @@
 #Create your own shooter
 
 from pygame import *
-
+from random import randint
 speed = 10
+lost = 0
+font.init()
+style = font.Font(None, 36)
 class GameSprite(sprite.Sprite):
     def __init__(self, player_image, player_x, player_y, player_speed, width, height):
         super().__init__()
@@ -24,8 +27,28 @@ class Player(GameSprite):
             self.rect.y -= speed
         if keys_pressed[K_DOWN] and self.rect.y < 395:
             self.rect.y += speed
+    def fire(self):
+        bullet = Bullet("bullet.png",self.rect.centerx,self.rect.top,5,10,10)
+        bullets.add(bullet)
+class Enemy(GameSprite):
+    def update(self):
+        self.rect.y += self.speed
+        global lost
+        if(self.rect.y >= 700):
+            lost += 1 
+            self.rect.y = 0
+            self.rect.x = randint(0,500)
+class Bullet(GameSprite):
+    def update(self):
+        self.rect.y -= self.speed
+        if self.rect.y <= 0:
+            self.kill()
 rocket = Player("rocket.png",100,500,1,100,70)
-
+enemies = sprite.Group()
+bullets = sprite.Group()
+for i in range(0,6):
+    enemy = Enemy("ufo.png",randint(0,500),0,randint(1,3),70,70)
+    enemies.add(enemy)
 window = display.set_mode((500, 700))
 display.set_caption("shooter")
 background = transform.scale(image.load("galaxy.jpg"), (500, 700))
@@ -46,10 +69,23 @@ while run:
         for e in event.get():
             if e.type == QUIT:
                 run = False
-                finish = Truem
+                finish = True
+            if e.type == KEYDOWN:
+                if e.key == K_SPACE:
+                    rocket.fire()
+
         window.blit(background,(0, 0))
         rocket.reset()
         rocket.update()
+        enemies.draw(window)
+        enemies.update()
+        bullets.draw(window)
+        bullets.update()
+
+        text_lose = style.render(
+            "Missed:" + str(lost), 1,(255,255,255)
+        )
+        window.blit(text_lose,(10,20))
         display.update()
         clock.tick(FPS)
 
